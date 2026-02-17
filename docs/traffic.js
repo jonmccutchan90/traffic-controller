@@ -364,19 +364,43 @@ function drawIntersection() {
   ctx.fillRect(0, CY - HALF, 700, ROAD_W);
   ctx.fillRect(CX - HALF, 0, ROAD_W, 700);
 
-  // Lane markings (dashed center lines)
-  ctx.strokeStyle = COLORS.laneMarking;
-  ctx.lineWidth = 2;
-  ctx.setLineDash([10, 10]);
-  // Vertical
-  for (let y = 0; y < 700; y += 20) {
-    if (y > CY - HALF - 5 && y < CY + HALF + 5) continue;
-    ctx.beginPath(); ctx.moveTo(CX, y); ctx.lineTo(CX, y + 10); ctx.stroke();
+  // Lane markings
+  // Double-yellow center line (solid)
+  ctx.strokeStyle = '#ccaa00';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([]);
+  // Vertical center
+  for (const off of [-2, 2]) {
+    for (let y = 0; y < 700; y += 1) {
+      if (y > CY - HALF - 5 && y < CY + HALF + 5) continue;
+      ctx.beginPath(); ctx.moveTo(CX + off, y); ctx.lineTo(CX + off, y + 1); ctx.stroke();
+    }
   }
-  // Horizontal
-  for (let x = 0; x < 700; x += 20) {
-    if (x > CX - HALF - 5 && x < CX + HALF + 5) continue;
-    ctx.beginPath(); ctx.moveTo(x, CY); ctx.lineTo(x + 10, CY); ctx.stroke();
+  // Horizontal center
+  for (const off of [-2, 2]) {
+    for (let x = 0; x < 700; x += 1) {
+      if (x > CX - HALF - 5 && x < CX + HALF + 5) continue;
+      ctx.beginPath(); ctx.moveTo(x, CY + off); ctx.lineTo(x + 1, CY + off); ctx.stroke();
+    }
+  }
+
+  // White dashed lane dividers (between through & left-turn lanes)
+  ctx.strokeStyle = COLORS.laneMarking;
+  ctx.lineWidth = 1;
+  ctx.setLineDash([8, 8]);
+  // Vertical road: lane dividers at CX ± 15
+  for (const lx of [CX - 15, CX + 15]) {
+    for (let y = 0; y < 700; y += 16) {
+      if (y > CY - HALF - 5 && y < CY + HALF + 5) continue;
+      ctx.beginPath(); ctx.moveTo(lx, y); ctx.lineTo(lx, y + 8); ctx.stroke();
+    }
+  }
+  // Horizontal road: lane dividers at CY ± 15
+  for (const ly of [CY - 15, CY + 15]) {
+    for (let x = 0; x < 700; x += 16) {
+      if (x > CX - HALF - 5 && x < CX + HALF + 5) continue;
+      ctx.beginPath(); ctx.moveTo(x, ly); ctx.lineTo(x + 8, ly); ctx.stroke();
+    }
   }
   ctx.setLineDash([]);
 
@@ -437,7 +461,8 @@ function drawSignalHead(x, y, dir, heads) {
 }
 
 function drawSignals() {
-  const pos = { N:[CX+58, CY-72], S:[CX-58, CY+72], E:[CX+72, CY+58], W:[CX-72, CY-58] };
+  // Signal heads near the traffic they control (RHT layout)
+  const pos = { N:[CX-58, CY-72], S:[CX+58, CY+72], E:[CX+72, CY-58], W:[CX-72, CY+58] };
   for (const d of DIRS) drawSignalHead(pos[d][0], pos[d][1], d, signalCtrl.heads);
 }
 
@@ -479,28 +504,39 @@ function drawQueues() {
 
 function drawCars() {
   // Draw small car rectangles queued on each approach
+  // RIGHT-HAND TRAFFIC: each direction's lanes are on the RIGHT side
+  // of the road relative to travel direction.
+  //   N approach = southbound = WEST half of road
+  //   S approach = northbound = EAST half of road
+  //   E approach = westbound  = NORTH half of road
+  //   W approach = eastbound  = SOUTH half of road
+  // Within each half: left-turn lane is INNER (closer to center),
+  //                   through lane is OUTER (farther from center).
   const carW = 10, carH = 16, gap = 3;
   for (const d of DIRS) {
     const app = intersection[d];
+
+    // Through lane (outer lane — farther from center line)
     for (let i = 0; i < Math.min(app.through.queue, 15); i++) {
       let cx, cy;
-      if (d === "N") { cx = CX + 14; cy = CY - HALF - 25 - i * (carH + gap); }
-      else if (d === "S") { cx = CX - 14 - carW; cy = CY + HALF + 25 + i * (carH + gap); }
-      else if (d === "E") { cx = CX + HALF + 25 + i * (carH + gap); cy = CY + 14; }
-      else { cx = CX - HALF - 25 - i * (carH + gap); cy = CY - 14 - carW; }
+      if (d === "N") { cx = CX - 26; cy = CY - HALF - 25 - i * (carH + gap); }
+      else if (d === "S") { cx = CX + 16; cy = CY + HALF + 25 + i * (carH + gap); }
+      else if (d === "E") { cx = CX + HALF + 25 + i * (carH + gap); cy = CY - 26; }
+      else { cx = CX - HALF - 25 - i * (carH + gap); cy = CY + 16; }
 
       const w = (d === "E" || d === "W") ? carH : carW;
       const h = (d === "E" || d === "W") ? carW : carH;
       ctx.fillStyle = carColors[i % carColors.length];
       roundRect(cx, cy, w, h, 2);
     }
-    // Left-turn cars (offset to inner lane)
+
+    // Left-turn lane (inner lane — closer to center line)
     for (let i = 0; i < Math.min(app.left.queue, 8); i++) {
       let cx, cy;
-      if (d === "N") { cx = CX - 4 - carW; cy = CY - HALF - 25 - i * (carH + gap); }
-      else if (d === "S") { cx = CX + 4; cy = CY + HALF + 25 + i * (carH + gap); }
-      else if (d === "E") { cx = CX + HALF + 25 + i * (carH + gap); cy = CY - 4 - carW; }
-      else { cx = CX - HALF - 25 - i * (carH + gap); cy = CY + 4; }
+      if (d === "N") { cx = CX - 13; cy = CY - HALF - 25 - i * (carH + gap); }
+      else if (d === "S") { cx = CX + 3; cy = CY + HALF + 25 + i * (carH + gap); }
+      else if (d === "E") { cx = CX + HALF + 25 + i * (carH + gap); cy = CY - 13; }
+      else { cx = CX - HALF - 25 - i * (carH + gap); cy = CY + 3; }
 
       const w = (d === "E" || d === "W") ? carH : carW;
       const h = (d === "E" || d === "W") ? carW : carH;
