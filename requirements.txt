@@ -1,0 +1,12 @@
+# Core
+numpy>=1.24.0
+opencv-python>=4.8.0
+
+# Computer vision provider (only needed for YOLOv8 provider, not mock)
+ultralytics>=8.0.0
+
+# Dashboard
+pygame>=2.5.0
+
+# Testing
+pytest>=7.0.0

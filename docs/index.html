@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adaptive Traffic Light Controller</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Adaptive Traffic Light Controller</h1>
+      <p class="subtitle">Real-time simulation with computer-vision-inspired elastic timing</p>
+    </header>
+
+    <div class="main-layout">
+      <!-- Canvas area -->
+      <div class="canvas-wrap">
+        <canvas id="intersection" width="700" height="700"></canvas>
+      </div>
+
+      <!-- Info panel -->
+      <div id="panel" class="panel">
+        <section>
+          <h2>Signal Status</h2>
+          <div id="signal-info" class="info-grid"></div>
+        </section>
+
+        <section>
+          <h2>Adaptive Timing</h2>
+          <div id="timing-info" class="info-grid"></div>
+        </section>
+
+        <section>
+          <h2>Queue Counts</h2>
+          <div id="queue-info" class="info-grid"></div>
+        </section>
+
+        <section>
+          <h2>Safety</h2>
+          <div id="safety-info" class="info-grid"></div>
+        </section>
+
+        <section>
+          <h2>Controls</h2>
+          <div class="controls">
+            <div class="btn-row">
+              <button onclick="triggerPreemption('N')" title="Emergency from North">🚨 N</button>
+              <button onclick="triggerPreemption('S')" title="Emergency from South">🚨 S</button>
+              <button onclick="triggerPreemption('E')" title="Emergency from East">🚨 E</button>
+              <button onclick="triggerPreemption('W')" title="Emergency from West">🚨 W</button>
+            </div>
+            <div class="btn-row">
+              <button onclick="clearPreemption()" class="btn-clear">Clear Preemption</button>
+              <button onclick="togglePause()" id="btn-pause" class="btn-pause">⏸ Pause</button>
+            </div>
+            <div class="btn-row">
+              <button onclick="injectSurge('N')" class="btn-surge" title="Surge from North">📈 N</button>
+              <button onclick="injectSurge('S')" class="btn-surge" title="Surge from South">📈 S</button>
+              <button onclick="injectSurge('E')" class="btn-surge" title="Surge from East">📈 E</button>
+              <button onclick="injectSurge('W')" class="btn-surge" title="Surge from West">📈 W</button>
+            </div>
+            <div class="speed-control">
+              <label>Speed: <input type="range" id="speed" min="0.5" max="5" step="0.5" value="1"
+                oninput="setSpeed(this.value)">
+                <span id="speed-label">1x</span>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <section class="kbd-help">
+          <h2>Keyboard</h2>
+          <p><kbd>N</kbd><kbd>S</kbd><kbd>E</kbd><kbd>W</kbd> Preempt &nbsp;
+             <kbd>C</kbd> Clear &nbsp;
+             <kbd>Space</kbd> Pause &nbsp;
+             <kbd>1-5</kbd> Speed</p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script src="traffic.js"></script>
+</body>
+</html>

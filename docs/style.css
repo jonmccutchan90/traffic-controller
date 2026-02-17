@@ -1,0 +1,167 @@
+/* ── Reset & Base ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+  background: #0d1117;
+  color: #c9d1d9;
+  min-height: 100vh;
+}
+
+#app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+header {
+  text-align: center;
+  padding: 1rem 0 0.5rem;
+}
+header h1 {
+  font-size: 1.4rem;
+  color: #58a6ff;
+}
+.subtitle {
+  font-size: 0.8rem;
+  color: #8b949e;
+  margin-top: 0.25rem;
+}
+
+/* ── Layout ──────────────────────────────────────────── */
+.main-layout {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  align-items: flex-start;
+}
+
+.canvas-wrap {
+  flex: 0 0 700px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+  width: 700px;
+  height: 700px;
+}
+
+/* ── Panel ───────────────────────────────────────────── */
+.panel {
+  flex: 1;
+  min-width: 280px;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.panel section {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.panel h2 {
+  font-size: 0.8rem;
+  color: #58a6ff;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.info-grid .label {
+  color: #8b949e;
+}
+.info-grid .value {
+  text-align: right;
+  font-weight: 600;
+}
+
+.value.red    { color: #f85149; }
+.value.yellow { color: #f0c040; }
+.value.green  { color: #3fb950; }
+.value.blue   { color: #58a6ff; }
+.value.white  { color: #ffffff; }
+
+/* ── Controls ────────────────────────────────────────── */
+.controls { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.btn-row {
+  display: flex;
+  gap: 0.35rem;
+}
+
+button {
+  flex: 1;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  background: #21262d;
+  color: #c9d1d9;
+  font-family: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+button:hover { background: #30363d; }
+
+.btn-clear  { background: #1a3a2a; border-color: #238636; color: #3fb950; }
+.btn-clear:hover { background: #238636; color: #fff; }
+
+.btn-pause  { background: #2a2a1a; border-color: #9e6a03; color: #f0c040; }
+.btn-pause:hover { background: #9e6a03; color: #fff; }
+
+.btn-surge  { background: #1a2a3a; border-color: #1f6feb; color: #58a6ff; }
+.btn-surge:hover { background: #1f6feb; color: #fff; }
+
+.speed-control {
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+}
+.speed-control label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #8b949e;
+}
+.speed-control input[type=range] {
+  width: 100px;
+  accent-color: #58a6ff;
+}
+#speed-label {
+  color: #58a6ff;
+  min-width: 2.5em;
+}
+
+.kbd-help { font-size: 0.7rem; color: #8b949e; }
+.kbd-help p { line-height: 1.8; }
+kbd {
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 3px;
+  padding: 0.1em 0.4em;
+  font-size: 0.7rem;
+  color: #c9d1d9;
+  margin-right: 0.15em;
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .main-layout { flex-direction: column; align-items: center; }
+  .canvas-wrap { flex: none; }
+  .panel { max-width: 700px; width: 100%; }
+}
