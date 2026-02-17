@@ -267,7 +267,7 @@ function enforcePhase(ph) {
 
 /* ── Mock Traffic Generator ────────────────────────────────────── */
 
-const MAX_QUEUE = 25;  // Realistic cap — a long block's worth of cars
+const MAX_QUEUE = 20;
 
 function tickMockTraffic(intersection, dt) {
   for (const d of DIRS) {
@@ -275,38 +275,40 @@ function tickMockTraffic(intersection, dt) {
     const head = signalCtrl.heads[d];
 
     // Time-varying arrival rate (sinusoidal rush-hour pattern)
-    const timeMult = 1 + 1.0 * Math.max(0, Math.sin((simTime % 120) / 120 * Math.PI));
-    const baseRate = 0.3 * timeMult * (surgeDir === d ? 3 : 1);
+    // Base ~0.10 cars/sec → peak ~0.15 cars/sec
+    // With 4 phases, each dir gets green ~25% of cycle. At discharge 0.5/s
+    // that's effective capacity ~0.125 cars/sec, so base 0.10 is sustainable
+    // and peak 0.15 causes mild congestion (the adaptive algorithm's job).
+    const timeMult = 1 + 0.5 * Math.max(0, Math.sin((simTime % 120) / 120 * Math.PI));
+    const baseRate = 0.10 * timeMult * (surgeDir === d ? 3 : 1);
 
     // --- Through lane ---
-    // Arrivals: ~0.3–0.9 cars/sec depending on time, Poisson-ish
     const tArr = Math.random() < baseRate * dt ? 1 : 0;
 
     // Departures: discharge at saturation flow ONLY when signal is green
+    // 1800 veh/hr = 0.5 veh/sec through, ramp up when queue is long
     let tDep = 0;
     if (head.veh === SIG.GREEN) {
-      // Saturation flow = 1800 veh/hr = 0.5 veh/sec
-      tDep = Math.random() < (0.5 * dt) ? 1 : 0;
+      const dischargeRate = app.through.queue > 5 ? 0.65 : 0.5;
+      tDep = Math.random() < (dischargeRate * dt) ? 1 : 0;
     } else if (head.veh === SIG.YELLOW) {
-      // Some cars still clear during yellow
-      tDep = Math.random() < (0.3 * dt) ? 1 : 0;
+      tDep = Math.random() < (0.4 * dt) ? 1 : 0;
     }
 
     app.through.queue = Math.min(MAX_QUEUE, Math.max(0, app.through.queue + tArr - tDep));
 
     // --- Left-turn lane ---
-    // Arrivals: ~15% of through rate
-    const lArr = Math.random() < baseRate * 0.15 * dt ? 1 : 0;
+    // ~12% of through arrival rate
+    const lArr = Math.random() < baseRate * 0.12 * dt ? 1 : 0;
 
     let lDep = 0;
     if (head.lt === SIG.GREEN_ARROW) {
-      // Protected left: saturation flow = 1600 veh/hr = 0.44 veh/sec
-      lDep = Math.random() < (0.44 * dt) ? 1 : 0;
+      lDep = Math.random() < (0.5 * dt) ? 1 : 0;
     } else if (head.lt === SIG.FLASHING_YELLOW) {
-      // Permissive yield: some turn when gaps appear (~30% of protected rate)
-      lDep = Math.random() < (0.15 * dt) ? 1 : 0;
+      // Permissive yield: turn when gaps appear
+      lDep = Math.random() < (0.20 * dt) ? 1 : 0;
     } else if (head.lt === SIG.YELLOW_ARROW) {
-      lDep = Math.random() < (0.2 * dt) ? 1 : 0;
+      lDep = Math.random() < (0.25 * dt) ? 1 : 0;
     }
 
     app.left.queue = Math.min(MAX_QUEUE, Math.max(0, app.left.queue + lArr - lDep));

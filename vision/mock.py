@@ -39,9 +39,9 @@ class MockProvider(VehicleDetectionProvider):
     """
 
     def __init__(self) -> None:
-        self._base_rate: float = 0.3
-        self._peak_mult: float = 2.5
-        self._left_frac: float = 0.15
+        self._base_rate: float = 0.10
+        self._peak_mult: float = 1.5
+        self._left_frac: float = 0.12
         self._enable_surge: bool = True
         self._rng: random.Random = random.Random()
         self._start_time: float = 0.0
@@ -51,9 +51,9 @@ class MockProvider(VehicleDetectionProvider):
         self._queues: dict[tuple[str, str], int] = {}
 
     def initialize(self, config: dict[str, Any]) -> None:
-        self._base_rate = config.get("base_arrival_rate", 0.3)
-        self._peak_mult = config.get("peak_multiplier", 2.5)
-        self._left_frac = config.get("left_turn_fraction", 0.15)
+        self._base_rate = config.get("base_arrival_rate", 0.10)
+        self._peak_mult = config.get("peak_multiplier", 1.5)
+        self._left_frac = config.get("left_turn_fraction", 0.12)
         self._enable_surge = config.get("enable_surge", True)
         seed = config.get("random_seed", None)
         self._rng = random.Random(seed)
@@ -92,17 +92,16 @@ class MockProvider(VehicleDetectionProvider):
 
         vehicles: list[DetectedVehicle] = []
 
-        MAX_QUEUE = 25  # Realistic cap
+        MAX_QUEUE = 20  # Realistic cap
 
         for d in Direction:
             rate = self._base_rate * time_mult
             if surge_dir == d:
                 rate *= 3.0  # Surge triples the arrival rate
 
-            # Poisson arrivals for through lane (~0.3-0.9 cars/sec)
+            # Poisson arrivals for through lane (~0.10-0.15 cars/sec)
             through_arrivals = 1 if self._rng.random() < rate else 0
-            # Departures happen at ~0.5 cars/sec only conceptually
-            # (actual discharge depends on signal, but mock has no signal access)
+            # Departures: probabilistic drain (~0.4 cars/sec aggregate)
             through_departures = 1 if self._rng.random() < 0.4 else 0
 
             key_through = (d.value, LaneType.THROUGH.value)
@@ -113,7 +112,7 @@ class MockProvider(VehicleDetectionProvider):
 
             # Left turn arrivals (fraction of through)
             left_arrivals = 1 if self._rng.random() < rate * self._left_frac else 0
-            left_departures = 1 if self._rng.random() < 0.3 else 0
+            left_departures = 1 if self._rng.random() < 0.25 else 0
 
             key_left = (d.value, LaneType.LEFT_TURN.value)
             self._queues[key_left] = min(
