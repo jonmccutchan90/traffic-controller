@@ -92,27 +92,33 @@ class MockProvider(VehicleDetectionProvider):
 
         vehicles: list[DetectedVehicle] = []
 
+        MAX_QUEUE = 25  # Realistic cap
+
         for d in Direction:
             rate = self._base_rate * time_mult
             if surge_dir == d:
                 rate *= 3.0  # Surge triples the arrival rate
 
-            # Poisson arrivals for through lane
-            through_arrivals = self._rng.randint(0, max(1, int(rate * 4)))
-            through_departures = self._rng.randint(0, 2)  # Some cars leave
+            # Poisson arrivals for through lane (~0.3-0.9 cars/sec)
+            through_arrivals = 1 if self._rng.random() < rate else 0
+            # Departures happen at ~0.5 cars/sec only conceptually
+            # (actual discharge depends on signal, but mock has no signal access)
+            through_departures = 1 if self._rng.random() < 0.4 else 0
 
             key_through = (d.value, LaneType.THROUGH.value)
-            self._queues[key_through] = max(
-                0, self._queues[key_through] + through_arrivals - through_departures
+            self._queues[key_through] = min(
+                MAX_QUEUE,
+                max(0, self._queues[key_through] + through_arrivals - through_departures),
             )
 
             # Left turn arrivals (fraction of through)
-            left_arrivals = int(through_arrivals * self._left_frac + self._rng.random())
-            left_departures = self._rng.randint(0, 1)
+            left_arrivals = 1 if self._rng.random() < rate * self._left_frac else 0
+            left_departures = 1 if self._rng.random() < 0.3 else 0
 
             key_left = (d.value, LaneType.LEFT_TURN.value)
-            self._queues[key_left] = max(
-                0, self._queues[key_left] + left_arrivals - left_departures
+            self._queues[key_left] = min(
+                MAX_QUEUE,
+                max(0, self._queues[key_left] + left_arrivals - left_departures),
             )
 
             # Generate DetectedVehicle objects at plausible positions

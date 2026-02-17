@@ -267,20 +267,49 @@ function enforcePhase(ph) {
 
 /* ── Mock Traffic Generator ────────────────────────────────────── */
 
+const MAX_QUEUE = 25;  // Realistic cap — a long block's worth of cars
+
 function tickMockTraffic(intersection, dt) {
   for (const d of DIRS) {
     const app = intersection[d];
-    const timeMult = 1 + 1.5 * Math.max(0, Math.sin((simTime % 120) / 120 * Math.PI));
-    const rate = 0.3 * timeMult * (surgeDir === d ? 3 : 1);
+    const head = signalCtrl.heads[d];
 
-    // Arrivals (Poisson-ish per tick)
-    const tArr = Math.round(rate * dt * 4 + (Math.random() - 0.3));
-    const tDep = Math.round(Math.random() * 1.5 * dt);
-    app.through.queue = Math.max(0, app.through.queue + tArr - tDep);
+    // Time-varying arrival rate (sinusoidal rush-hour pattern)
+    const timeMult = 1 + 1.0 * Math.max(0, Math.sin((simTime % 120) / 120 * Math.PI));
+    const baseRate = 0.3 * timeMult * (surgeDir === d ? 3 : 1);
 
-    const lArr = Math.max(0, Math.round(tArr * 0.15 + Math.random() - 0.4));
-    const lDep = Math.round(Math.random() * 0.8 * dt);
-    app.left.queue = Math.max(0, app.left.queue + lArr - lDep);
+    // --- Through lane ---
+    // Arrivals: ~0.3–0.9 cars/sec depending on time, Poisson-ish
+    const tArr = Math.random() < baseRate * dt ? 1 : 0;
+
+    // Departures: discharge at saturation flow ONLY when signal is green
+    let tDep = 0;
+    if (head.veh === SIG.GREEN) {
+      // Saturation flow = 1800 veh/hr = 0.5 veh/sec
+      tDep = Math.random() < (0.5 * dt) ? 1 : 0;
+    } else if (head.veh === SIG.YELLOW) {
+      // Some cars still clear during yellow
+      tDep = Math.random() < (0.3 * dt) ? 1 : 0;
+    }
+
+    app.through.queue = Math.min(MAX_QUEUE, Math.max(0, app.through.queue + tArr - tDep));
+
+    // --- Left-turn lane ---
+    // Arrivals: ~15% of through rate
+    const lArr = Math.random() < baseRate * 0.15 * dt ? 1 : 0;
+
+    let lDep = 0;
+    if (head.lt === SIG.GREEN_ARROW) {
+      // Protected left: saturation flow = 1600 veh/hr = 0.44 veh/sec
+      lDep = Math.random() < (0.44 * dt) ? 1 : 0;
+    } else if (head.lt === SIG.FLASHING_YELLOW) {
+      // Permissive yield: some turn when gaps appear (~30% of protected rate)
+      lDep = Math.random() < (0.15 * dt) ? 1 : 0;
+    } else if (head.lt === SIG.YELLOW_ARROW) {
+      lDep = Math.random() < (0.2 * dt) ? 1 : 0;
+    }
+
+    app.left.queue = Math.min(MAX_QUEUE, Math.max(0, app.left.queue + lArr - lDep));
   }
 }
 
